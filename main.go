@@ -13,7 +13,7 @@ import (
 )
 
 // Compile-time version variable
-var Version string
+var version string
 
 func main() {
 	// Define command-line flags
@@ -27,7 +27,7 @@ func main() {
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Println("Application Version:", Version)
+		fmt.Println("GCS Connection Tester -  Version:", version)
 		return
 	}
 
