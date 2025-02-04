@@ -1,4 +1,4 @@
-module mckesson/gcsconntest
+module criticalsys/gcsconntest
 
 go 1.23.5
 
