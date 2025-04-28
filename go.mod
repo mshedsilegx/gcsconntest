@@ -3,7 +3,7 @@ module criticalsys/gcsconntest
 go 1.23.5
 
 require (
-	cloud.google.com/go/storage v1.51.0
+	cloud.google.com/go/storage v1.52.0
 	google.golang.org/api v0.229.0
 )
 
