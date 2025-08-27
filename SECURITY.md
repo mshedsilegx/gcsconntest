@@ -10,7 +10,7 @@ We are committed to ensuring the security of our application. The following tabl
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please report it to us by sending an email to `security@example.com`. We will respond to your report within 48 hours.
+If you discover a security vulnerability, please report it to us by sending an email to `mis@criticalsys.net`. We will respond to your report within 48 hours.
 
 Please include the following information in your report:
 - A description of the vulnerability.
