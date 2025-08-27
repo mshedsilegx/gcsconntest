@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -15,55 +14,65 @@ import (
 // Compile-time version variable
 var version string
 
+// config struct to hold command-line flags
+type config struct {
+	credFile    string
+	bucketName  string
+	bucketPrefix string
+	projectID   string
+	maxObjects  int
+	showVersion bool
+}
+
+
 func main() {
-	// Define command-line flags
-	credFile := flag.String("credentials", "", "Path to JSON credential file")
-	bucketName := flag.String("bucket", "", "GCS bucket name")
-	bucketPrefix := flag.String("prefix", "", "GCS bucket prefix")
-	projectID := flag.String("project", "", "GCP project ID")
-	maxObjects := flag.Int("max", 10, "Maximum number of objects to list")
-	showVersion := flag.Bool("version", false, "Display application version")
+	cfg := parseFlags()
+	if err := run(cfg); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+}
 
-	flag.Parse()
-
-	if *showVersion {
-		fmt.Println("GCS Connection Tester -  Version:", version)
-		return
+// run executes the main application logic.
+func run(cfg config) error {
+	if cfg.showVersion {
+		fmt.Println("GCS Connection Tester - Version:", version)
+		return nil
 	}
 
-	// Validate required flags
-	if *credFile == "" || *bucketName == "" || *projectID == "" {
-		fmt.Println("Credentials file, bucket name, project ID and max objects are required.")
-		flag.Usage()
-		os.Exit(1)
+	if cfg.credFile == "" || cfg.bucketName == "" || cfg.projectID == "" {
+		return fmt.Errorf("credentials file, bucket name, and project ID are required")
 	}
 
-	// Create a new context
 	ctx := context.Background()
-
-	// Initialize the Google Cloud Storage client
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(*credFile))
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(cfg.credFile))
 	if err != nil {
-		log.Fatalf("Failed to create GCS client: %v", err)
+		return fmt.Errorf("failed to create GCS client: %w", err)
 	}
 	defer client.Close()
 
-	// Get a handle for the bucket
-	bucket := client.Bucket(*bucketName)
-
-	// Check if the bucket exists
-	_, err = bucket.Attrs(ctx)
-	if err != nil {
-		log.Fatalf("Failed to get bucket attributes: %v", err)
+	if err := listGCSObjects(ctx, client, cfg); err != nil {
+		return fmt.Errorf("failed to list GCS objects: %w", err)
 	}
 
-	// List objects with the given prefix, up to the specified maximum number
-	it := bucket.Objects(ctx, &storage.Query{Prefix: *bucketPrefix})
-	if *bucketPrefix == "" {
-		fmt.Printf("Listing up to %d objects in bucket %s\n", *maxObjects, *bucketName)
+	fmt.Println("GCS connectivity test successful.")
+	return nil
+}
+
+// listGCSObjects lists objects in a GCS bucket.
+func listGCSObjects(ctx context.Context, client *storage.Client, cfg config) error {
+	bucket := client.Bucket(cfg.bucketName)
+
+	if _, err := bucket.Attrs(ctx); err != nil {
+		return fmt.Errorf("failed to get bucket attributes: %w", err)
+	}
+
+	if cfg.bucketPrefix == "" {
+		fmt.Printf("Listing up to %d objects in bucket %s\n", cfg.maxObjects, cfg.bucketName)
 	} else {
-		fmt.Printf("Listing up to %d objects in bucket %s with prefix %s:\n", *maxObjects, *bucketName, *bucketPrefix)
+		fmt.Printf("Listing up to %d objects in bucket %s with prefix %s:\n", cfg.maxObjects, cfg.bucketName, cfg.bucketPrefix)
 	}
+
+	it := bucket.Objects(ctx, &storage.Query{Prefix: cfg.bucketPrefix})
 	count := 0
 	for {
 		attrs, err := it.Next()
@@ -71,14 +80,27 @@ func main() {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Failed to list objects in bucket: %v", err)
+			return fmt.Errorf("failed to list objects in bucket: %w", err)
 		}
 		fmt.Println(attrs.Name)
 		count++
-		if count >= *maxObjects {
+		if count >= cfg.maxObjects {
 			break
 		}
 	}
 
-	fmt.Println("GCS connectivity test successful.")
+	return nil
+}
+
+// parseFlags parses the command-line flags and returns them in a config struct.
+func parseFlags() config {
+	var cfg config
+	flag.StringVar(&cfg.credFile, "credentials", "", "Path to JSON credential file")
+	flag.StringVar(&cfg.bucketName, "bucket", "", "GCS bucket name")
+	flag.StringVar(&cfg.bucketPrefix, "prefix", "", "GCS bucket prefix")
+	flag.StringVar(&cfg.projectID, "project", "", "GCP project ID")
+	flag.IntVar(&cfg.maxObjects, "max", 10, "Maximum number of objects to list")
+	flag.BoolVar(&cfg.showVersion, "version", false, "Display application version")
+	flag.Parse()
+	return cfg
 }
