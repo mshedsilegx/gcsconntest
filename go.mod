@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	cloud.google.com/go/storage v1.56.1
-	google.golang.org/api v0.248.0
+	google.golang.org/api v0.249.0
 )
 
 require (
