@@ -16,14 +16,13 @@ var version string
 
 // config struct to hold command-line flags
 type config struct {
-	credFile    string
-	bucketName  string
+	credFile     string
+	bucketName   string
 	bucketPrefix string
-	projectID   string
-	maxObjects  int
-	showVersion bool
+	projectID    string
+	maxObjects   int
+	showVersion  bool
 }
-
 
 func main() {
 	cfg := parseFlags()
