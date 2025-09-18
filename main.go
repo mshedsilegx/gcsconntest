@@ -47,7 +47,11 @@ func run(cfg config) error {
 	if err != nil {
 		return fmt.Errorf("failed to create GCS client: %w", err)
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Printf("Warning: failed to close GCS client: %v", err)
+		}
+	}()
 
 	if err := listGCSObjects(ctx, client, cfg); err != nil {
 		return fmt.Errorf("failed to list GCS objects: %w", err)
