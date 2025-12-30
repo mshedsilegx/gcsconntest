@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -42,8 +43,15 @@ func run(cfg config) error {
 		return fmt.Errorf("credentials file, bucket name, and project ID are required")
 	}
 
+	data, err := os.ReadFile(cfg.credFile)
+	if err != nil {
+		return fmt.Errorf("failed to read credentials file: %v", err)
+	}
+
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(cfg.credFile))
+	client, err := storage.NewClient(ctx,
+		option.WithAuthCredentialsJSON(option.ServiceAccount, data),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create GCS client: %w", err)
 	}
