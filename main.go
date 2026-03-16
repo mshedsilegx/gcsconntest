@@ -33,7 +33,7 @@ type config struct {
 func main() {
 	// Parse command-line arguments into the config structure.
 	cfg := parseFlags()
-	
+
 	// Execute the core application logic.
 	if err := run(cfg); err != nil {
 		log.Fatalf("Error: %v", err)
@@ -117,11 +117,11 @@ func listGCSObjects(ctx context.Context, client *storage.Client, cfg config) err
 		if err != nil {
 			return fmt.Errorf("failed to list objects in bucket: %w", err)
 		}
-		
+
 		// Print the name of the object found.
 		fmt.Println(attrs.Name)
 		count++
-		
+
 		// Limit the number of objects returned to prevent excessive output.
 		if count >= cfg.maxObjects {
 			break
